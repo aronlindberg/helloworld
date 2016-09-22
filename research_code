@@ -1,0 +1,41 @@
+library('quantreg')
+
+#this is the example code
+require(zoo)
+data("UKDriverDeaths", package = "datasets")
+uk <- log10(UKDriverDeaths)
+dfm <- dynrq(uk ~ L(uk, 1) + L(uk,12))
+dfm
+
+dfmex <- dynrq(uk ~ d(uk, 1) + d(uk,12))
+dfmex
+
+dfm3 <- dynrq(uk ~ L(uk,1) + L(uk,12), tau = 1:1/10)
+summary(dfm3)
+
+#I had several different trials that i will post the following three lines were in all trials
+info <- read.csv(file.choose(),header = F, sep = ',')
+require(zoo)
+explore <- info[1:87,2:21]
+
+#1 - I tried being extremely specific as to where to conduct the regression and at every hundredth quantile
+dlr <- dynrq(explore ~ L(explore,2) + L(explore, 21), tau = 99/100, start = c(2,2), end = c(87,21))
+
+#2 - I tried converting the data to both a list and matrix. However I now know that the data must be a time series 
+ex <- as.numeric(unlist(explore))
+explore2 <- matrix(data = ex, nrow = 87, ncol = 20, byrow = FALSE, dimnames = NULL)
+myts <- ts(data = ex, frequency = 1, start = 1995, end = 2014)
+dlr <- dynrq(explore2 ~ L(explore2,2) + L(explore2, 21), tau = 99/100, start = c(2,2), end = c(87,21))
+dlr <- dynrq(myts ~ L(myts,1))
+
+#3 - This was the last thing I was trying the transformation suggested on StackOverflow. Still have issues converting the Matlab
+# 'eye' function into R when I revisit this project over winter break I may end up just trying to do it in Matlab
+ex <- as.numeric(unlist(explore))
+
+trix <- matrix(data = ex, nrow = 87, ncol = 20)
+
+trix <- trix + 5 * diag(1, dim(trix))
+  
+myts <- ts(data = trix, frequency = 1, start = 1995, end = 2014)
+
+dlr <- dynrq(myts ~ L(myts,1))
